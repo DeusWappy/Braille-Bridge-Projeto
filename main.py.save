@@ -1,0 +1,122 @@
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.popup import Popup
+from kivy.uix.label import Label
+from kivy.uix.button import Button
+from kivy.uix.filechooser import FileChooserIconView
+from kivy.lang import Builder
+from Algoritmo import tradutor
+import pdfplumber
+from kivy.clock import Clock
+import serial
+
+# Configurar a porta serial do Arduino
+arduino_port = '/dev/ttyUSB0'  # Ajuste conforme o seu sistema
+baud_rate = 9600
+arduino = serial.Serial(arduino_port, baud_rate)
+
+class PDFProcessorApp(App):
+    def build(self):
+        return Builder.load_file("main.kv")
+
+    def process_input(self, selected_file, input_text):
+        if selected_file:
+            pdf_path = selected_file[0]
+            self.process_pdf(pdf_path)
+        elif input_text.lower().endswith('.pdf'):
+            self.process_pdf(input_text)
+        else:
+            self.process_string(input_text)
+
+    def process_pdf(self, pdf_path):
+        try:
+            with pdfplumber.open(pdf_path) as pdf:
+                text = ''
+                for page in pdf.pages:
+                    text += page.extract_text()
+            self.show_result(text)
+        except Exception as e:
+            self.show_error(str(e))
+
+    def process_string(self, input_string):
+        self.show_result(input_string)
+
+    def show_result(self, result):
+        self.result = result
+        self.index = 0
+        self.translation_popup = Popup(title='Tradução', size_hint=(None, None), size=(400, 400))
+        self.translation_label = Label(text='', size_hint=(None, None), size=(400, 400), font_size="25sp")
+
+        # Criar uma grade para exibir a tradução
+        grid_layout = GridLayout(cols=1, spacing=10, size_hint_y=None)
+        grid_layout.bind(minimum_height=grid_layout.setter('height'))
+
+        # Adicionar cada caractere e sua tradução à grade
+        char_label = Label(text=char, font_size="20sp")
+        translation_label = Label(text=translation, font_name="DejaVuSansMono.ttf", font_size="15sp")
+        grid_layout.add_widget(char_label)
+        grid_layout.add_widget(translation_label)
+        grid_layout.add_widget(Label(text=" ", font_size="20sp"))  # Adicionar espaço em branco
+
+        # Adicionar a grade ao layout do popup
+        layout = BoxLayout(orientation='vertical')
+        layout.add_widget(grid_layout)
+        layout.add_widget(Button(text='Parar', size_hint=(None, None), height=40, on_press=self.stop_translation))
+        self.translation_popup.content = layout
+        self.translation_popup.open()
+
+        # Iniciar a tradução
+        self.is_translating = True
+        self.translate_next_character(0)
+
+    def schedule_next_translation(self, delay):
+        if self.is_translating:
+            Clock.schedule_once(self.translate_next_character, delay)
+
+    def translate_next_character(self, dt):
+        if self.index < len(self.result) and self.is_translating:
+            char = self.result[self.index]
+
+            delay = 2 if char != ' ' else 4  # Ajuste os atrasos para letras e espaços
+
+            # Traduzir caractere e enviar para o Arduino (opcional)
+            if char != ' ':
+                matriz = tradutor(char)
+                translation = f'{char}:\n' + '\n'.join([''.join(map(str, row)) for row in matriz])
+                self.translation_label.text = translation
+                self.send_to_arduino(matriz)
+                # Atualizar a translation_label com atraso
+            # Agendar a próxima tradução após o atraso
+            Clock.schedule_once(self.translate_next_character, delay)
+            self.index += 1
+        else:
+            self.stop_translation()
+
+
+
+    def send_to_arduino(self, matriz):
+        line = ''.join(map(str, [item for sublist in matriz for item in sublist])) + '\n'
+        try:
+            arduino.write(line.encode('utf-8'))
+        except Exception as e:
+            print(f"Erro ao enviar para o Arduino: {e}")
+
+    def reset_arduino(self):
+        # Envia uma linha de "zeros" para garantir que todos os pistões desçam
+        arduino.write('000000\n'.encode('utf-8'))
+
+    def stop_translation(self, *args):
+        self.is_translating = False
+        Clock.unschedule(self.translate_next_character)
+        self.translation_popup.dismiss()
+        self.reset_arduino()
+
+    def show_error(self, error_msg):
+        popup = Popup(title='Erro',
+                      content=Label(text=error_msg),
+                      size_hint=(None, None), size=(400, 200))
+        popup.open()
+
+if __name__ == '__main__':
+    PDFProcessorApp().run()
