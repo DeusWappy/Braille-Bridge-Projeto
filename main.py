@@ -58,12 +58,12 @@ class MainScreen(Screen):
         self.translation = ""
         self.index = 0
         self.modo_aprendizagem_var = False
-        self.translation_popup = Popup(title='Tradução', size_hint=(None, None), size=(300, 150))
+        self.translation_popup = Popup(title='Tradução', size_hint=(None, None), size=(400, 400))
     
         main_layout = BoxLayout(orientation='vertical')
     
         scroll_view = ScrollView(size_hint=(1, 1))
-        self.translation_label = Label(text='A traduzir...', size_hint = (1,1), pos_hint = {'center_x': 0.5}, font_size="20sp")
+        self.translation_label = Label(text='A traduzir...', size_hint = (1,1), pos_hint = {'center_x': 0.5,'center_y':0.5}, font_size="20sp")
         self.translation_label.bind(texture_size=self.translation_label.setter('size'))  
         scroll_view.add_widget(self.translation_label)
         main_layout.add_widget(scroll_view)
