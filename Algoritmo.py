@@ -54,8 +54,7 @@ def tradutor(letra):
       "{": [(1, 0), (0, 0), (1, 1), (2, 0)],  # Abre chaves
       "}": [(1, 1), (0, 0), (1, 1), (2, 1)],  # Fecha chaves
 
-      #ESPAÇO
-      " ": [(0, 1), (1, 0)]
+      " ": []
     }
 
   for l in letra:

@@ -1,24 +1,33 @@
-BoxLayout:
-    orientation: 'vertical'
-    spacing: 5
-    padding: [5, 5, 5, 5]
-
-    FileChooserIconView:
-        id: file_chooser
-        path: '/home/grupob10/Transferências'
-        size_hint_y: 0.5
-        filters: ['*.pdf']
-
+<MainScreen>:
     BoxLayout:
-        orientation: 'horizontal'
+        orientation: 'vertical'
         spacing: 5
+        padding: [5, 5, 5, 5]
 
-        TextInput:
-            id: input_text
-            hint_text: 'Insira texto aqui'
-            size_hint_x: 0.8
+        FileChooserIconView:
+            id: file_chooser
+            path: '/home/grupob10/Transferências'
+            size_hint_y: 0.5
+            filters: ['*.pdf']
 
-        Button:
-            text: 'Traduzir'
-            on_release: app.process_input(file_chooser.selection, input_text.text)
-            size_hint_x: 0.2
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: 5
+            size_hint_y: 0.5
+            height: dp(50)
+
+            TextInput:
+                id: input_text
+                hint_text: 'Insira texto aqui'
+                size_hint_x: 0.8
+
+            Button:
+                text: 'Traduzir'
+                on_release: app.root.get_screen('main_screen').process_input(file_chooser.selection, input_text.text)
+                size_hint_x: 0.2
+
+            Button:
+                text: 'Sair'
+                on_release: app.get_running_app().stop()
+                size_hint_x:0.2
+

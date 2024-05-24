@@ -1,0 +1,25 @@
+<LoadingScreen>:
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1  # Fundo branco
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: 20
+        padding: 50
+        Image:
+            id: logo
+            source: 'logo.png'
+            size_hint: None, None
+            size: 300, 300
+            pos_hint: {'center_x': 0.5}
+        ProgressBar:
+            id: progress_bar
+            max: 100
+            value: 0
+            size_hint: 1, None
+            height: 20
+            pos_hint: {'center_x': 0.5}
+            color: 1,0,0,1
